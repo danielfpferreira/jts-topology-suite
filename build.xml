@@ -75,6 +75,7 @@
     <copy file="${jts.lib}\jdom.jar"      tofile="${pre-zip.lib}\jdom.jar"   />
     <copy file="${jts.lib}\xerces.jar"    tofile="${pre-zip.lib}\xerces.jar" />
     <copy file="${jts.lib}\junit-3.7.jar" tofile="${pre-zip.lib}\junit.jar"  />
+    <copy file="${jts.lib}/json-simple-1.1.1.jar" tofile="${pre-zip.lib}/json-simple-1.1.1.jar"/>
     <!--<copy file="${jts.lib}\acme.jar"      tofile="${pre-zip.lib}\acme.jar"   /> -->
   	
     <copy todir="${pre-zip.testxml}">
@@ -106,6 +107,7 @@
       <classpath>
         <pathelement location="${pre-zip.lib}\jdom.jar"/>
         <pathelement location="${pre-zip.lib}\xerces.jar"/>
+        <pathelement location="${pre-zip.lib}/json-simple-1.1.1.jar"/>
       </classpath>
     </javac>
     <delete file="${pre-zip.lib}/jts-*" failonerror="false"/>
@@ -119,9 +121,54 @@
       />
   </target>
 
+<!-- ========================= JTS-IO =================================== -->
+
+  <target name='copy-source-jtsio' depends='props'
+  	description='Copies JTS-IO files to distribution directory' >
+   <delete dir="${pre-zip.jtsio}/src"/>
+   <delete dir="${pre-zip.jtsio}/test"/>
+   <copy todir="${pre-zip.jtsio}/src">
+     <fileset dir="${jtsio.src}">
+     </fileset>
+   </copy>
+  </target>
+
+  <target name='jtsio-jar' depends='props'>
+    <delete dir="${jtsio.classes}"/>
+    <mkdir dir="${jtsio.classes}"/>
+    <javac srcdir="${jtsio.src}"
+        	includes="**/*.java" listfiles="no"
+        	destdir="${jtsio.classes}"
+        	classpath="${pre-zip.lib}/jts-${jts.version}.jar;${jtsio.lib}/classes12-${ora.version}.jar;${jtsio.lib}/jsde91_sdk.jar;${jtsio.lib}/json-simple-1.1.1.jar"/>
+
+    <jar destfile="${pre-zip.lib}/jtsio-${jts.version}.jar" basedir="${jtsio.classes}" />
+    <!-- Sources JAR -->
+    <jar jarfile="${pre-zip.lib}/jtsio-${jts.version}-sources.jar"
+             basedir="${jtsio.src}"
+             includes="**/*.java"
+             excludes="**/jtstest/ **/jtsplugin/"
+             />
+  </target>
+
+  <target name="javadoc-jtsio" depends="copy-source-jtsio"
+          description="Generates the JTS-IO JavaDoc files">
+    <javadoc packagenames="com.vividsolutions.jts.*"
+    	     link="../../../doc/javadoc"
+             destdir="${pre-zip.jtsio}/doc/javadoc">
+      <sourcepath location="${pre-zip.jtsio}/src"/>
+      <classpath>
+        <pathelement location="${pre-zip.jts-jar}"/>
+        <pathelement location="${jtsio.lib}/classes12-${ora.version}.jar"/>
+        <pathelement location="${jtsio.lib}/jsde91_sdk.jar"/>
+        <pathelement location="${jtsio.lib}/json-simple-1.1.1.jar"/>
+        <pathelement location="${pre-zip.lib}\jdom.jar"/>
+        <pathelement location="${pre-zip.lib}\xerces.jar"/>
+      </classpath>
+    </javadoc>
+  </target>
 <!-- ========================= JTS_Test jar =================================== -->
 
-  <target name="jts-test-jar" depends="copy-source"
+  <target name="jts-test-jar" depends="copy-source, copy-source-jtsio"
           description="Builds JTS_Test.jar">
     <delete dir="${jtsapp.classes}"/>
     <mkdir dir="${jtsapp.classes}"/>
@@ -135,6 +182,7 @@
         <pathelement location="${pre-zip.lib}\xerces.jar"/>
         <pathelement location="${pre-zip.lib}\acme.jar"/>
         <pathelement location="${pre-zip.lib}\junit.jar"/>
+        <pathelement location="${pre-zip.lib}/json-simple-1.1.1.jar"/>
         <pathelement location="${pre-zip.lib}\jts-${jts.version}.jar"/>
       </classpath>
     </javac>
@@ -162,51 +210,7 @@
     </javadoc>
   </target>
 
-<!-- ========================= JTS-IO =================================== -->
-    
-  <target name='copy-source-jtsio' depends='props'
-  	description='Copies JTS-IO files to distribution directory' >
-   <delete dir="${pre-zip.jtsio}/src"/>
-   <delete dir="${pre-zip.jtsio}/test"/>
-   <copy todir="${pre-zip.jtsio}/src">
-     <fileset dir="${jtsio.src}">
-     </fileset>
-   </copy>    
-  </target>
-  
-  <target name='jtsio-jar' depends='props'>
-    <delete dir="${jtsio.classes}"/>
-    <mkdir dir="${jtsio.classes}"/>
-    <javac srcdir="${jtsio.src}" 
-        	includes="**/*.java" listfiles="no"
-        	destdir="${jtsio.classes}" 
-        	classpath="${pre-zip.lib}/jts-${jts.version}.jar;${jtsio.lib}/classes12-${ora.version}.jar;${jtsio.lib}/jsde91_sdk.jar;${jtsio.lib}/json-simple-1.1.1.jar"/>
-    	
-    <jar destfile="${pre-zip.lib}/jtsio-${jts.version}.jar" basedir="${jtsio.classes}" />
-    <!-- Sources JAR -->
-    <jar jarfile="${pre-zip.lib}/jtsio-${jts.version}-sources.jar"
-             basedir="${jtsio.src}"
-             includes="**/*.java"
-             excludes="**/jtstest/ **/jtsplugin/"
-             />
-  </target>
-  
-  <target name="javadoc-jtsio" depends="copy-source-jtsio"
-          description="Generates the JTS-IO JavaDoc files">
-    <javadoc packagenames="com.vividsolutions.jts.*"
-    	     link="../../../doc/javadoc"
-             destdir="${pre-zip.jtsio}/doc/javadoc">
-      <sourcepath location="${pre-zip.jtsio}/src"/>
-      <classpath>
-        <pathelement location="${pre-zip.jts-jar}"/>
-        <pathelement location="${jtsio.lib}/classes12-${ora.version}.jar"/>
-        <pathelement location="${jtsio.lib}/jsde91_sdk.jar"/>
-        <pathelement location="${jtsio.lib}/json-simple-1.1.1.jar"/>
-        <pathelement location="${pre-zip.lib}\jdom.jar"/>
-        <pathelement location="${pre-zip.lib}\xerces.jar"/>
-      </classpath>
-    </javadoc>
-  </target>
+
 
 <!-- =======================  JUnit  ========================= -->
 <!-- NOTE: implicitly depends on JTS distro being built first -->
