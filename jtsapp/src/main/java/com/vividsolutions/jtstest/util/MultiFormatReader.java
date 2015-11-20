@@ -38,6 +38,7 @@ import javax.xml.parsers.*;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.*;
 import com.vividsolutions.jts.io.gml2.*;
+import com.vividsolutions.jts.io.geojson.*;
 
 /**
  * Reads a {@link Geometry} from a string which is in either WKT, WKBHex
@@ -52,10 +53,11 @@ public class MultiFormatReader
 	public static final int FORMAT_WKT = 1;
 	public static final int FORMAT_WKB = 2;
 	public static final int FORMAT_GML = 3;
+	public static final int FORMAT_GEOJSON = 4;
 
 	public static boolean isWKT(String s)
 	{
-		return ! isWKB(s) && ! isGML(s);
+		return ! isWKB(s) && ! isGML(s) && ! isGEOJSON(s);
 	}
 	
 	public static boolean isWKB(String str)
@@ -68,11 +70,17 @@ public class MultiFormatReader
 		return str.indexOf("<") >= 0;
 	}
 	
+	public static boolean isGEOJSON(String str)
+	{
+		return str.indexOf("{") >= 0 ||str.indexOf("[") >= 0;
+	}
+	
 	public static int format(String s)
 	{
 		if (isWKB(s)) return FORMAT_WKB;
 		if (isGML(s)) return FORMAT_GML;
 		if (isWKT(s)) return FORMAT_WKT;
+		if (isGEOJSON(s)) return FORMAT_GEOJSON;;
 		return FORMAT_UNKNOWN;
 	}
 	
@@ -121,6 +129,9 @@ public class MultiFormatReader
     }
     if (isGML(trimStr))
     	return readGML(trimStr);
+
+    if (isGEOJSON(trimStr))
+	return readGEOJSON(trimStr);
     	
     return IOUtil.readGeometriesFromWKTString(trimStr, geomFactory);
   }
@@ -130,6 +141,19 @@ public class MultiFormatReader
   {
   	try {
   		return (new GMLReader()).read(str, geomFactory);
+  	}
+  	catch (Exception ex) {
+  		throw new ParseException(ex.getMessage());
+//  		ex.printStackTrace();
+  	}
+  }
+
+  private Geometry readGEOJSON(String str) 
+  	throws ParseException
+  {
+  	try {
+		System.out.println(str);
+  		return (new GeoJsonReader(geomFactory)).read(str);
   	}
   	catch (Exception ex) {
   		throw new ParseException(ex.getMessage());
